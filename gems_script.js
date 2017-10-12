@@ -3,6 +3,8 @@
 var canvas = document.getElementById('gameField');
 var context = document.getElementById('gameField').getContext('2d');
 
+var $playBtn = $('#playBtn');
+
 /* Перечисление возможных форм фигур */
 var shape = {
     triangle: 1,
@@ -12,6 +14,8 @@ var shape = {
 
 /* Флаговая переменная сообщающая загружены ли графические ресурсы */
 var isSpriteLoad = false;
+var isPlayBtnSprite = false;
+var isPlaing = false;
 
 
 
@@ -24,8 +28,19 @@ gameResource.prepareResources();
 var worldView = new View(canvas, context, gameWorld, gameResource);
 
 
-gameController.createWorld();
-gameController.worldUpdate();
+$(canvas).one('click', function () {
+    isPlaing = true;
+    gameController.createWorld();
+    gameController.worldUpdate();
+});
+/*
+$playBtn.click(function (evnt) {
+    $(this).hide();
+    gameController.createWorld();
+    gameController.worldUpdate();
+});
+*/
+
 
 
 setInterval(function () {
@@ -42,9 +57,6 @@ function mouseMoveHandler(event) {
     gameWorld.gameFieldWatcher(x, y, gameWorld);
 
 };
-
-
-/* ------------------TEST---------------- */
 
 
 /*-------------------------Объект FIGURE-------------------------------*/
@@ -735,6 +747,8 @@ function View(canvas, context, world, resources) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         this.drawTitles(canvas, context, world);
         this.drawBgTiles(canvas, context, world);
+        if(!isPlaing)
+            this.drawPlayBtn(canvas, context);
     };
 
     /* Метод рисующий плитки-подложки для игровых фигурок */
@@ -935,20 +949,22 @@ function View(canvas, context, world, resources) {
     /* Метод занимается отрисовкой мира */
     this.drawWorld = function () {
         this.drawField(this.canvas, this.context, this.world);
-        for (var i = 0; i < this.world.width; i++)
-            for (var j = 0; j < this.world.height; j++) {
-                var figure = this.world.gameField[i][j];
-                if (figure && figure.y >= 0) {
-                    this.drawGem(this.canvas, this.context, figure, this.world);
-                    //this.drawFigure(this.canvas, this.context, figure, this.world);
+        if (isPlaing) {
+            for (var i = 0; i < this.world.width; i++)
+                for (var j = 0; j < this.world.height; j++) {
+                    var figure = this.world.gameField[i][j];
+                    if (figure && figure.y >= 0) {
+                        this.drawGem(this.canvas, this.context, figure, this.world);
+                        //this.drawFigure(this.canvas, this.context, figure, this.world);
+                    }
                 }
+            if (this.world.floatingFigure) {
+                this.drawGem(this.canvas, this.context, this.world.floatingFigure, this.world);
+                //this.drawFigure(this.canvas, this.context, this.world.floatingFigure, this.world);
             }
-        if (this.world.floatingFigure) {
-            this.drawGem(this.canvas, this.context, this.world.floatingFigure, this.world);
-            //this.drawFigure(this.canvas, this.context, this.world.floatingFigure, this.world);
+            if (this.world.gameScore.scores.length > 0)
+                this.drawScoreParts(this.canvas, this.context, this.world);
         }
-        if (this.world.gameScore.scores.length > 0)
-            this.drawScoreParts(this.canvas, this.context, this.world);
 
     };
 
@@ -992,6 +1008,14 @@ function View(canvas, context, world, resources) {
         context.fillText("Scores: " + world.gameScore.totalScore,
             490, 90);
     };
+
+    this.drawPlayBtn = function (canvas, context) {
+        if (isPlayBtnSprite) {
+            context.drawImage(resources.playSprite,
+                (canvas.width / 2) - (resources.playSprite.width / 2),
+                (canvas.height / 2) - (resources.playSprite.height / 2));
+        }
+    }
 };
 
 
@@ -1005,6 +1029,7 @@ function Resources(world, context) {
 
     this.isSpriteLoad = false;
     this.gemsSprite = new Image();
+    this.playSprite = new Image();
     this.gemHeight = 54;
     this.gemWidth = 54;
     this.tileSize = 71;
@@ -1035,9 +1060,14 @@ function Resources(world, context) {
         this.focuseFigureDx = -this.world.scale / 15;
 
         this.gemsSprite.src = "images/gems.png";
+        this.playSprite.src = "images/play.png";
 
         this.gemsSprite.onload = function () {
             isSpriteLoad = true;
+        };
+
+        this.playSprite.onload = function () {
+            isPlayBtnSprite = true;
         };
 
         this.goldenGradient = this.context.createLinearGradient(this.world.offset_x, this.world.offset_y,
