@@ -747,7 +747,7 @@ function View(canvas, context, world, resources) {
     this.drawGem = function (canvas, context, figure, world) {
         var resources = this.resources;
         context.shadowColor = "transparent";
-        var reduce = 0;
+        var reduce = this.getFigureReduce(figure);
         var scale = world.scale;
         var line = 0;
         var row = 0;
@@ -778,11 +778,6 @@ function View(canvas, context, world, resources) {
                 break;
         }
 
-        if (figure.isActive)
-            reduce = this.resources.activeFigureReduce;
-        else
-            reduce = this.resources.figureReduce;
-
         if (figure.isFocus) {
             focusDx = this.resources.focuseFigureDx;
             focusDy = this.resources.focuseFigureDx;
@@ -803,9 +798,23 @@ function View(canvas, context, world, resources) {
 
     };
 
+    this.setFigureLineWidth = function (context, figure) {
+        if (figure.isFocus)
+            context.lineWidth = this.resources.focuseFigureStrokeWidth;
+        else
+            context.lineWidth = this.resources.figureStrokeWidth;
+    };
+
+    this.getFigureReduce = function (figure) {
+        if (figure.isActive)
+            return this.resources.activeFigureReduce;
+        else
+            return this.resources.figureReduce;
+    };
+
     /* Метод рисующий игрове фигуры в виде кржков с обводкой */
     this.drawCircle = function (canvas, context, figure, world) {
-        var reduce = 0;
+        var reduce = this.getFigureReduce(figure);
         var scale = world.scale;
 
         context.fillStyle = figure.figureColor.fillColor;
@@ -817,14 +826,9 @@ function View(canvas, context, world, resources) {
         context.shadowOffsety = 2;
 
         if (figure.isFocus)
-            context.lineWidth = scale / 10;
+            context.lineWidth = this.resources.focuseFigureStrokeWidth;
         else
-            context.lineWidth = scale / 20;
-
-        if (figure.isActive)
-            reduce = scale / 5;
-        else
-            reduce = scale / 10;
+            context.lineWidth = this.resources.figureStrokeWidth;
 
         context.beginPath();
 
@@ -840,7 +844,7 @@ function View(canvas, context, world, resources) {
 
     /* Метод рисующий игрове фигуры в виде квадратов с обводкой */
     this.drawSquare = function (canvas, context, figure, world) {
-        var reduce = 0;
+        var reduce = this.getFigureReduce(figure);
         var scale = world.scale;
         context.fillStyle = figure.figureColor.fillColor;
         context.strokeStyle = figure.figureColor.strokeColor;
@@ -856,16 +860,6 @@ function View(canvas, context, world, resources) {
             context.lineWidth = scale / 10;
         else
             context.lineWidth = scale / 20;
-
-        if (figure.isActive)
-            reduce = scale / 5;
-        else
-            reduce = scale / 10;
-
-        if (isSpriteLoad) {
-
-        }
-
 
         context.fillRect((figure.x * scale + reduce) + world.offset_x,
             (figure.y * scale + reduce) + world.offset_y,
@@ -879,7 +873,7 @@ function View(canvas, context, world, resources) {
 
     /* Метод рисующий игрове фигуры в виде треугольников с обводкой */
     this.drawTriangle = function (canvas, context, figure, world) {
-        var reduce = 0;
+        var reduce = this.getFigureReduce(figure);
         var scale = world.scale;
         context.fillStyle = figure.figureColor.fillColor;
         context.strokeStyle = figure.figureColor.strokeColor;
@@ -895,11 +889,6 @@ function View(canvas, context, world, resources) {
             context.lineWidth = scale / 10;
         else
             context.lineWidth = scale / 20;
-
-        if (figure.isActive)
-            reduce = scale / 5;
-        else
-            reduce = scale / 10;
 
         context.beginPath();
 
@@ -938,7 +927,8 @@ function View(canvas, context, world, resources) {
             for (var j = 0; j < this.world.height; j++) {
                 var figure = this.world.gameField[i][j];
                 if (figure && figure.y >= 0) {
-                    this.drawGem(this.canvas, this.context, figure, this.world);
+                    //this.drawGem(this.canvas, this.context, figure, this.world);
+                    this.drawFigure(this.canvas, this.context, figure, this.world);
                 }
             }
         if (this.world.floatingFigure) {
@@ -1027,8 +1017,8 @@ function Resources(world, context) {
 
         this.figureReduce = this.world.scale / 10;
         this.activeFigureReduce = this.world.scale / 5;
-        this.figureStrokeWidth = this.world.scale / 10;
-        this.focuseFigureStrokeWidth = this.world.scale / 20;
+        this.figureStrokeWidth = this.world.scale / 20;
+        this.focuseFigureStrokeWidth = this.world.scale / 10;
         this.focuseFigureDx = -this.world.scale / 15;
 
         this.gemsSprite.src = "images/gems.png";
