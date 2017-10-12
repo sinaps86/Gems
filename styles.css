@@ -1,0 +1,16 @@
+html{
+
+    height: 100%;
+}
+body {
+    width: 800px;
+    margin: 100px auto;
+    background-color: #ffcd9c;
+    background-image: radial-gradient(closest-corner circle at center center, rgb(240,251,255), rgb(191, 235, 239));
+}
+
+#gameField {
+    border: 1px solid #061642;
+    background-image: radial-gradient(closest-corner circle at center center, rgb(240,251,255), rgb(191, 235, 239));
+    border-radius: 20px;
+}
