@@ -19,8 +19,8 @@
       <file leaf-file-name="gems_script.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/gems_script.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="536">
-              <caret line="443" column="24" lean-forward="false" selection-start-line="443" selection-start-column="24" selection-end-line="443" selection-end-column="24" />
+            <state relative-caret-position="351">
+              <caret line="24" column="0" lean-forward="true" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -73,10 +73,13 @@
       <find>crea</find>
       <find>рису</find>
       <find>view.</find>
-      <find>log</find>
       <find>тест</find>
       <find>needRepeate</find>
       <find>createFigure</find>
+      <find>createScor</find>
+      <find>score</find>
+      <find>drawTi</find>
+      <find>log</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -184,12 +187,12 @@
       <workItem from="1506989747997" duration="25432000" />
       <workItem from="1507709215001" duration="17550000" />
       <workItem from="1507769292249" duration="13909000" />
-      <workItem from="1507787254997" duration="5118000" />
+      <workItem from="1507787254997" duration="10479000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="128297000" />
+    <option name="totallyTimeSpent" value="133658000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
@@ -516,8 +519,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/gems_script.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="536">
-          <caret line="443" column="24" lean-forward="false" selection-start-line="443" selection-start-column="24" selection-end-line="443" selection-end-column="24" />
+        <state relative-caret-position="351">
+          <caret line="24" column="0" lean-forward="true" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
           <folding />
         </state>
       </provider>

@@ -12,26 +12,7 @@ var shape = {
 
 /* Флаговая переменная сообщающая загружены ли графические ресурсы */
 var isSpriteLoad = false;
-/*
-var resources = {
-    gemsSprite: new Image(),
-    gemHeight: 54,
-    gemWidth: 54,
-    tileSize: 71,
-    tileXBegin: 0,
-    tileYBegin: 162,
-    colorGreen: "#49c72b",
-    colorDarkGreen: "#1c5017",
-    colorBlue: "#436fda",
-    colorDarkBlue: "#061642",
-    colorRed: "#DA1D0D",
-    colorDarkRed: "#420F0A",
-    colorOne: "#cbaa91",
-    colorTwo: "#e89878"
-};
 
-
-resources.gemsSprite.src = "images/gems.png";*/
 
 
 /*-------------------------MAIN-------------------------------*/
@@ -41,6 +22,7 @@ var gameController = new Controller(gameWorld, canvas);
 var gameResource = new Resources(gameWorld, context);
 gameResource.prepareResources();
 var worldView = new View(canvas, context, gameWorld, gameResource);
+
 
 gameController.createWorld();
 gameController.worldUpdate();
@@ -81,7 +63,21 @@ function Figure(x, y, type, figureColor) {
 function FigureColor(fillColor, strokeColor) {
     this.fillColor = fillColor;
     this.strokeColor = strokeColor;
-}
+};
+
+function FigureSet() {
+    this.figures = [];
+    this.addFigure = function (figure) {
+        this.figures.push(figure);
+    }
+    this.getCenter = function () {
+        return {left: this.figures[1].x, top: this.figures[1].y};
+    } ;
+
+    this.isVertical = function () {
+        return false;
+    }
+};
 
 /*-------------------------Фабрика фигур-------------------------------*/
 
@@ -121,13 +117,50 @@ function createFigure(x, y) {
     return new Figure(x, y, type, figureColor);
 }
 
-/*   -----------Score Part-----------------   */
+/*   -----------Score -----------------   */
 
 function ScorePart(score, isVertical, center) {
     this.score = score;
     this.isVertical = isVertical;
     this.center = center;
-}
+};
+
+function ScoreSet(world){
+    this.world = world;
+    this.totalScore = 0;
+    this.scores = [];
+
+    this.createScores = function () {
+
+        var completes = world.completeFigures;
+        if (completes.length > 0) {
+            for (var i = 0; i < completes.length; i++) {
+               // var isVertical = completes[i].isVertical();
+                var isVertical = false;
+                var scorePart = this.countingScore(completes[i]);
+               // var center = completes[i].getCenter();
+                var center = {left: completes[i][1].x, top: completes[i][1].y};
+                this.totalScore += scorePart;
+                this.addScoreParts(new ScorePart(scorePart, isVertical, center));
+            }
+        }
+    };
+
+    /* Метод добаляющий  часть игрового счета (счет за успешнею фигуру) в общий массив очков*/
+    this.addScoreParts = function (scorePart) {
+        this.scores.push(scorePart);
+    };
+
+    /* Метод ведующи подсчет общего количесва очков */
+    this.countingScore = function(figureSet) {
+        var score = 10;
+        if (figureSet.length > 3) {
+            score += (figureSet.length - 3) * 10;
+        }
+        return score;
+    };
+};
+
 
 /*-------------------CONTROLLER---------------*/
 
@@ -182,7 +215,7 @@ function Controller(world, canvas) {
     this.moveWorld = function () {
         world.move();
         world.completeFigures = [];
-        world.scoreParts = [];
+        world.gameScore.scores = [];
     };
 
     /* Этот метов вызывает метод moveWorld необходимео количество раз*/
@@ -279,8 +312,9 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
     //this.canvas = canvas;
 
     /* Счет игры */
-    this.score = 0;
-    this.scoreParts = [];
+    this.gameScore = new ScoreSet(this);
+
+    //this.scoreParts = [];
 
     /* флаг окончания игры */
     this.isGameOver = false;
@@ -330,7 +364,6 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
 
     /* Метод заполняющий игровое поле */
     this.fillWorld = function () {
-
         for (var i = 0; i < this.width; i++) {
             this.gameField.push([]);
             for (var j = this.height - 1; j >= 0; j--) {
@@ -361,6 +394,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
 
             this.processFigure();
             this.isFigureBuilding = false;
+
         }
     };
 
@@ -405,6 +439,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         }
     };
 
+    /* Метод добавляет успешную собранную фигуру в "карту успешно собранных фигур" обновляемую при каждом обновлении мира  */
     this.addCompleteFigure = function (newFigures) {
         var completes = this.completeFigures;
         if (completes.length > 0) {
@@ -426,34 +461,8 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         this.completeFigures.push(newFigures);
     };
 
-    /* Метод создющий набор  */
-    this.createScores = function () {
-        var completes = this.completeFigures;
 
-        if (completes.length > 0) {
-            for (var i = 0; i < completes.length; i++) {
-                var isVertical = this.isVerticalFigureSet(completes[i]);
-                var scorePart = this.countingScore(completes[i]);
-                var center = this.getCenterOfFigureSet(completes[i]);
-                this.score += scorePart;
-                this.addScoreParts(new ScorePart(scorePart, isVertical, center));
-            }
-        }
-    };
-
-    /* Метод добаляющий  */
-    this.addScoreParts = function (scorePart) {
-        this.scoreParts.push(scorePart);
-    }
-
-    this.countingScore = function (figureSet) {
-        var score = 10;
-        if (figureSet.length > 3) {
-            score += (figureSet.length - 3) * 10;
-        }
-        return score;
-    };
-
+    /* Метод определяющий является ли фигура вертикальной */
     this.isVerticalFigureSet = function (figureSet) {
         for (var i = 1; i < figureSet.length; i++) {
             if (figureSet[0].y !== figureSet[i].y) {
@@ -462,7 +471,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         }
         return true;
     };
-
+    /* Метод возворащающий центр фигуры в виде объекта */
     this.getCenterOfFigureSet = function (figureSet) {
         return {left: figureSet[1].x, top: figureSet[1].y};
     };
@@ -488,7 +497,10 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         var count = 0;
         var maxCount = 0;
 
-        this.createScores();
+        //this.createScores();
+        //this.score.createScores();
+
+        this.gameScore.createScores();
 
         for (var i = 0; i < this.width; i++) {
             for (var j = 0; j < this.gameField[i].length; j++) {
@@ -534,6 +546,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
 
     /* Метод создает новые фигуры в каждом столбце, взамен удачно "сброшенных" */
     this.createNew = function () {
+
         for (var i = 0; i < this.width; i++) {
             var count = 0;
             var figure = this.gameField[i];
@@ -934,7 +947,7 @@ function View(canvas, context, world, resources) {
             this.drawGem(this.canvas, this.context, this.world.floatingFigure, this.world);
             //this.drawFigure(this.canvas, this.context, this.world.floatingFigure, this.world);
         }
-        if (this.world.scoreParts.length > 0)
+        if (this.world.gameScore.scores.length > 0)
             this.drawScoreParts(this.canvas, this.context, this.world);
 
     };
@@ -942,6 +955,7 @@ function View(canvas, context, world, resources) {
     /* Метод рисующий очики набранные за сбор каждой из фигур */
     this.drawScoreParts = function (canvas, context, world) {
         var scale = world.scale;
+        var scores = world.gameScore.scores;
         var textSize = scale - 20;
         var textDy = textSize;
 
@@ -952,13 +966,13 @@ function View(canvas, context, world, resources) {
         context.font = "bold " + textSize + "px" + " Arial";
 
 
-        for (var i = 0; i < world.scoreParts.length; i++) {
-            context.fillText(world.scoreParts[i].score,
-                ((world.scoreParts[i].center.left * scale) + (scale / 2)) + world.offset_x,
-                ((world.scoreParts[i].center.top * scale) + (textDy)) + world.offset_y);
-            context.strokeText(world.scoreParts[i].score,
-                ((world.scoreParts[i].center.left * scale) + (scale / 2)) + world.offset_x,
-                ((world.scoreParts[i].center.top * scale) + (textDy)) + world.offset_y);
+        for (var i = 0; i < scores.length; i++) {
+            context.fillText(scores[i].score,
+                ((scores[i].center.left * scale) + (scale / 2)) + world.offset_x,
+                ((scores[i].center.top * scale) + (textDy)) + world.offset_y);
+            context.strokeText(scores[i].score,
+                ((scores[i].center.left * scale) + (scale / 2)) + world.offset_x,
+                ((scores[i].center.top * scale) + (textDy)) + world.offset_y);
 
         }
 
@@ -975,7 +989,7 @@ function View(canvas, context, world, resources) {
         context.fillText("Super Gems",
             90, 90);
         context.font = "2em Germania One";
-        context.fillText("Scores: " + world.score,
+        context.fillText("Scores: " + world.gameScore.totalScore,
             490, 90);
     };
 };
@@ -1021,12 +1035,9 @@ function Resources(world, context) {
         this.focuseFigureDx = -this.world.scale / 15;
 
         this.gemsSprite.src = "images/gems.png";
-        console.log("Спрайт назначен" + this.gemsSprite.src);
 
         this.gemsSprite.onload = function () {
             isSpriteLoad = true;
-            console.log("Спрайт загружен  " + isSpriteLoad);
-
         };
 
         this.goldenGradient = this.context.createLinearGradient(this.world.offset_x, this.world.offset_y,
