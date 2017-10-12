@@ -3,16 +3,16 @@
 var canvas = document.getElementById('gameField');
 var context = document.getElementById('gameField').getContext('2d');
 
-var needRepeate = false;
-
+/* Перечисление возможных форм фигур */
 var shape = {
     triangle: 1,
     square: 2,
     circle: 3
 };
 
+/* Флаговая переменная сообщающая загружены ли графические ресурсы */
 var isSpriteLoad = false;
-
+/*
 var resources = {
     gemsSprite: new Image(),
     gemHeight: 54,
@@ -31,7 +31,7 @@ var resources = {
 };
 
 
-resources.gemsSprite.src = "images/gems.png";
+resources.gemsSprite.src = "images/gems.png";*/
 
 
 /*-------------------------MAIN-------------------------------*/
@@ -43,7 +43,7 @@ gameResource.prepareResources();
 var worldView = new View(canvas, context, gameWorld, gameResource);
 
 gameController.createWorld();
-gameController.worldFastUpdate();
+gameController.worldUpdate();
 
 
 setInterval(function () {
@@ -108,13 +108,13 @@ function createFigure(x, y) {
 
     switch (randomColor) {
         case 1:
-            figureColor = new FigureColor(resources.colorGreen, resources.colorDarkGreen);
+            figureColor = new FigureColor(gameResource.colorGreen, gameResource.colorDarkGreen);
             break;
         case 2:
-            figureColor = new FigureColor(resources.colorBlue, resources.colorDarkBlue);
+            figureColor = new FigureColor(gameResource.colorBlue, gameResource.colorDarkBlue);
             break;
         default:
-            figureColor = new FigureColor(resources.colorRed, resources.colorDarkRed);
+            figureColor = new FigureColor(gameResource.colorRed, gameResource.colorDarkRed);
             break;
     }
 
@@ -131,17 +131,20 @@ function ScorePart(score, isVertical, center) {
 
 /*-------------------CONTROLLER---------------*/
 
+/* Объект представляющий собой Controller и модели Model View Controller*/
 function Controller(world, canvas) {
 
     this.world = world;
     this.moveCount = 8;
 
+    /* Метод производящий начальную инициализацию игрового мира*/
     this.createWorld = function () {
         world.fillWorld();
         world.score = 0;
         world.isGameOver = false;
     };
-
+    /* Метод производящий поверхностную проверку игрового мира, на предмет того существуют ли собранные и готовые к сбросу фигуры
+    * Выдает результат используемый для принятия решения о том стоит ли обновлять игровой мир*/
     this.fastCheckWorld = function () {
         world.checkRows();
         world.checkCols();
@@ -156,6 +159,7 @@ function Controller(world, canvas) {
         }
     };
 
+    /* Метод осуществляет отсроченную проверку игового мира на предмет того существуют ли собранные и готовые к сбросу фигуры*/
     this.checkWorld = function (delay, control) {
         var controller = control;
         var delay = delay;
@@ -167,20 +171,21 @@ function Controller(world, canvas) {
         }, delay);
     }
 
-
+    /* Сбрасывает собранные фигры, удаляя их с поля */
     this.сleaningWorld = function (delay) {
         setTimeout(function () {
             world.cleaning();
         }, delay);
     }
 
+    /* Вызывается полсе сброс завершенных фигур, с целью заполнить образовашиеся в результате пустоты, фиграми находящимися выше */
     this.moveWorld = function () {
         world.move();
         world.completeFigures = [];
         world.scoreParts = [];
     };
 
-
+    /* Этот метов вызывает метод moveWorld необходимео количество раз*/
     this.fullDrop = function (delay, interval, control) {
 
         var delay = delay;
@@ -193,24 +198,14 @@ function Controller(world, canvas) {
                 control.moveCount--;
                 setTimeout(control.fullDrop, interval, 0, interval, control);
             } else {
-                control.worldFastUpdate();
+                control.worldUpdate();
             }
         }, delay);
 
     }
 
+    /* Метод полностью обновляет игровой мир */
     this.worldUpdate = function () {
-        world.isUpdating = true;
-        this.stopInteractive();
-
-        world.stopWatch(null, {world: world});
-
-        this.checkWorld(400, this);
-        this.сleaningWorld(800);
-        this.fullDrop(1200, 400, this);
-    };
-
-    this.worldFastUpdate = function () {
         world.isUpdating = true;
         this.stopInteractive();
 
@@ -222,6 +217,7 @@ function Controller(world, canvas) {
         }
     }
 
+    /* Метод активирует все обработчики пользовательских событий необходимых для управления игровым миром */
     this.startInteractive = function (canvas) {
         var world = this.world;
         var $canvas = $('canvas');
@@ -257,7 +253,7 @@ function Controller(world, canvas) {
 
             if (world.isCanSwap) {
                 world.swapingFigures();
-                event.data.worldFastUpdate();
+                event.data.worldUpdate();
             }
         });
 
@@ -265,6 +261,7 @@ function Controller(world, canvas) {
 
     };
 
+    /* Метод дезактивирует все обработчики пользовательских событий необходимых для управления игровым миром */
     this.stopInteractive = function (canvas) {
         var $canvas = $('canvas');
         $canvas.off();
@@ -322,11 +319,16 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
     this.swampList = [];
     this.completeFigures = [];
 
+    /* Фигура находящаяся в данный момент в фокусе (например под курсором мыши) */
     this.focusFigure;
+    /* Фигура находящаяся в данный момент в состоянии перетаскивания */
     this.dragingFigure;
+    /* Фигура находящаяся в данный момент как бы приклеенной к курсору мыши, свидетельсвуя о ее перетаскивании */
     this.floatingFigure;
+    /* Фигура являющаяся потенциальной целью для обмена с перетаскиваемой */
     this.targetFigure;
 
+    /* Метод заполняющий игровое поле */
     this.fillWorld = function () {
 
         for (var i = 0; i < this.width; i++) {
@@ -424,6 +426,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         this.completeFigures.push(newFigures);
     };
 
+    /* Метод создющий набор  */
     this.createScores = function () {
         var completes = this.completeFigures;
 
@@ -438,6 +441,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         }
     };
 
+    /* Метод добаляющий  */
     this.addScoreParts = function (scorePart) {
         this.scoreParts.push(scorePart);
     }
@@ -539,9 +543,6 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
                     count++;
                 }
             }
-            if (count > 0) {
-                needRepeate = true;
-            }
 
             for (var k = 1; k < (count + 1); k++) {
                 figure.push(createFigure(i, -k));
@@ -625,6 +626,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         }
     };
 
+    /* Метод создающий "парящую" фигуру при перетаскивании */
     this.createFloatingFigure = function (world) {
         return new Figure(world.dragingFigure.x, world.dragingFigure.y,
             world.dragingFigure.type,
@@ -632,6 +634,8 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
                 world.dragingFigure.figureColor.strokeColor));
     };
 
+    /* Метод удаляющий все временные фигуры, такие как фокусная, активная, плавующая.
+    * курсора из пределов игрового поля */
     this.stopWatch = function (event, staff) {
 
         var world = staff.world;
@@ -668,6 +672,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         figure.isActive = true;
     };
 
+    /* Метод меняющий две фигуры местами */
     this.swapingFigures = function () {
         if (this.swampList.length > 1) {
             var figure1 = this.swampList[0];
@@ -687,6 +692,7 @@ function World(width, height, scale, offset_x, offset_y, canvas) {
         }
     };
 
+    /* Метод определяющий могут ли 2 фигуры поменяться местами */
     this.canSwap = function (figure1, figure2) {
         if (figure1.x == figure2.x && figure1.y == figure2.y) {
             return false;
@@ -798,6 +804,7 @@ function View(canvas, context, world, resources) {
 
     };
 
+    /* Метод устанавливает толщину линии обводки для фигур в режиме рисования геометрических фигур */
     this.setFigureLineWidth = function (context, figure) {
         if (figure.isFocus)
             context.lineWidth = this.resources.focuseFigureStrokeWidth;
@@ -805,6 +812,7 @@ function View(canvas, context, world, resources) {
             context.lineWidth = this.resources.figureStrokeWidth;
     };
 
+    /* Метод возвращающий коэффициент уменьшения фигуры при ее активации */
     this.getFigureReduce = function (figure) {
         if (figure.isActive)
             return this.resources.activeFigureReduce;
@@ -825,10 +833,7 @@ function View(canvas, context, world, resources) {
         context.shadowOffsetX = 2;
         context.shadowOffsety = 2;
 
-        if (figure.isFocus)
-            context.lineWidth = this.resources.focuseFigureStrokeWidth;
-        else
-            context.lineWidth = this.resources.figureStrokeWidth;
+        this.setFigureLineWidth(context, figure);
 
         context.beginPath();
 
@@ -856,10 +861,7 @@ function View(canvas, context, world, resources) {
 
         context.lineJoin = "bevel";
 
-        if (figure.isFocus)
-            context.lineWidth = scale / 10;
-        else
-            context.lineWidth = scale / 20;
+        this.setFigureLineWidth(context, figure);
 
         context.fillRect((figure.x * scale + reduce) + world.offset_x,
             (figure.y * scale + reduce) + world.offset_y,
@@ -885,10 +887,7 @@ function View(canvas, context, world, resources) {
 
         context.lineJoin = "bevel";
 
-        if (figure.isFocus)
-            context.lineWidth = scale / 10;
-        else
-            context.lineWidth = scale / 20;
+        this.setFigureLineWidth(context, figure);
 
         context.beginPath();
 
@@ -927,12 +926,13 @@ function View(canvas, context, world, resources) {
             for (var j = 0; j < this.world.height; j++) {
                 var figure = this.world.gameField[i][j];
                 if (figure && figure.y >= 0) {
-                    //this.drawGem(this.canvas, this.context, figure, this.world);
-                    this.drawFigure(this.canvas, this.context, figure, this.world);
+                    this.drawGem(this.canvas, this.context, figure, this.world);
+                    //this.drawFigure(this.canvas, this.context, figure, this.world);
                 }
             }
         if (this.world.floatingFigure) {
             this.drawGem(this.canvas, this.context, this.world.floatingFigure, this.world);
+            //this.drawFigure(this.canvas, this.context, this.world.floatingFigure, this.world);
         }
         if (this.world.scoreParts.length > 0)
             this.drawScoreParts(this.canvas, this.context, this.world);
@@ -1012,9 +1012,8 @@ function Resources(world, context) {
     this.focuseFigureStrokeWidth = 0;
     this.focuseFigureDx = 0;
 
+    /* Метод настраивающий и загружающий ресурсы */
     this.prepareResources = function () {
-
-
         this.figureReduce = this.world.scale / 10;
         this.activeFigureReduce = this.world.scale / 5;
         this.figureStrokeWidth = this.world.scale / 20;
@@ -1054,8 +1053,6 @@ function Resources(world, context) {
         this.goldenGradient.addColorStop(0.95, "yellow");
         this.goldenGradient.addColorStop(1.0, "orange");
 
-        console.log("Gradient");
-        console.log("Спрайт загружен  " + isSpriteLoad);
     };
 };
 
